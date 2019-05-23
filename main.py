@@ -1,7 +1,7 @@
 import sqlite3 as lite 
 import sys
 
-con = None
+
 
 query_string1 = '''
 SELECT C.FirstName, C.LastName, C.Phone, C.City FROM Customer C JOIN (
@@ -40,6 +40,7 @@ ORDER BY Artist.Name
 '''
 
 def data(query_string):
+  con = None  
   try:
     con = lite.connect('Chinook_Sqlite.sqlite')
     cur = con.cursor()  
