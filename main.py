@@ -1,9 +1,9 @@
-import sqlite3 as lite 
+import sqlite3 as lite
 import sys
+import pprint
 
 
-
-query_string1 = '''
+query_string_first_task = '''
 SELECT C.FirstName, C.LastName, C.Phone, C.City FROM Customer C JOIN (
     SELECT C1.City, C1.CustomerId FROM Customer C1
     inner join Invoice 
@@ -11,47 +11,48 @@ SELECT C.FirstName, C.LastName, C.Phone, C.City FROM Customer C JOIN (
     group by C1.City 
     having count(distinct C1.CustomerId) > 1
 ) TMP1 ON TMP1.City = C.City 
-INNER JOIN Invoice X ON C.CustomerId =X.CustomerId 
-GROUP BY C.CustomerId;
+inner join Invoice X on C.CustomerId =X.CustomerId 
+group by C.CustomerId;
+'''
+query_string_second_task = '''
+select c.City, round(sum(i.Total),2) as t from Customer c inner join Invoice I on c.CustomerId = I.CustomerId
+group by c.City
+order by t DESC
+limit 3;
+'''
+query_string_third_task = '''
+select t.name as GenreName,
+       T1.name as Track,
+       A.title as Album,
+       A2.Name as Artist
+FROM (select G.GenreId, G.name
+    from InvoiceLine IL
+    JOIN Track T ON T.trackId = IL.trackId
+    Join Genre G ON G.GenreId = T.GenreId
+    group by G.GenreId
+    order by sum(quantity) DESC limit 1) t
+Join Track T1 ON T1.GenreId  = t.GenreId
+LEFT JOIN Album A ON A.AlbumId = T1.AlbumId
+LEFT JOIN Artist A2 ON A2.ArtistId = A.artistId
+;
 '''
 
-query_string2 = '''
-SELECT City
-FROM Customer, Invoice
-WHERE Customer.CustomerId = Invoice.CustomerId
-GROUP BY City
-ORDER BY sum(Total) DESC
-LIMIT 3
-'''
-query_string3 = '''
-SELECT T1.Name Genre, Track.Name Track, Album.Title, Artist.Name Artist
-FROM Track, Album, Artist, (SELECT Genre.GenreId, Genre.Name
-                            FROM Track
-                            INNER JOIN Genre ON Genre.GenreId = Track.GenreId
-                            INNER JOIN InvoiceLine ON Track.TrackId = InvoiceLine.TrackId
-                            GROUP BY Track.GenreId
-                            ORDER BY count(Track.GenreId) DESC
-                            LIMIT 1
-                           ) T1
-WHERE Track.AlbumId = Album.AlbumId
-AND Album.ArtistId = Artist.ArtistId
-AND Track.GenreId = T1.GenreId
-ORDER BY Artist.Name
-'''
 
-def data(query_string):
-  con = None  
-  try:
-    con = lite.connect('Chinook_Sqlite.sqlite')
-    cur = con.cursor()  
-    cur.execute(query_string)  
+def db_output(query_string):
+    try:
+        con = lite.connect('Chinook_Sqlite.sqlite')
+        cur = con.cursor()
+        cur.execute(query_string)
 
-    print(cur.fetchall())
-  except Exception as e:
-    print(e)
-    sys.exit(1)
-  finally:
-    if con is not None:
-      con.close()
-  return data 
-      
+        data = cur.fetchall()
+        pprint.pprint(data)
+    except Exception as e:
+        print(e)
+        sys.exit(1)
+    finally:
+        if con is not None:
+            con.close()
+    return data
+db_output(query_string_first_task)
+db_output(query_string_second_task)
+db_output(query_string_third_task)
